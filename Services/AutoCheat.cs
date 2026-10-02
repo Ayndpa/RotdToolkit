@@ -42,6 +42,15 @@ namespace RotdToolkit.Services
         public bool HasPlayerInfo => PlayerInfoAnchor > 0;
         public bool HasPlayers => PlayerSpeedAddresses.Count > 0;
 
+        public void Reset()
+        {
+            PlayerInfoAnchor = -1;
+            PlayerSpeedAddresses = new List<long>();
+            _rpOriginal = 0;
+            _levelOriginal = null;
+            _unlockOriginal = null;
+        }
+
         public long RpAddress => PlayerInfoAnchor - 60;
         public long[] LevelAddresses => new[] { PlayerInfoAnchor - 32, -28, -24, -20, -16, -12, -8, -4 };
         public long AwareAddress => PlayerInfoAnchor - 56;

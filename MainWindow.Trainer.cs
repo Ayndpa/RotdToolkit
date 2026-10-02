@@ -18,11 +18,26 @@ namespace RotdToolkit
         private bool _locatePlayersDue = true;
         private bool _suppressCheatToggle;
         private string _cheatStatus = "等待游戏进程…（启动游戏后会自动连接）";
+        private bool _cheatAvailable;
 
         public string CheatStatus
         {
             get => _cheatStatus;
             set { _cheatStatus = value; Raise(nameof(CheatStatus)); }
+        }
+
+        public bool CheatAvailable
+        {
+            get => _cheatAvailable;
+            private set
+            {
+                if (_cheatAvailable == value)
+                {
+                    return;
+                }
+                _cheatAvailable = value;
+                Raise(nameof(CheatAvailable));
+            }
         }
 
         private void InitTrainer()
@@ -69,6 +84,7 @@ namespace RotdToolkit
                     Dispatcher.Invoke(() =>
                     {
                         CheatStatus = $"存档对象：{(pi ? "已定位" : "未找到")}　玩家对象：{(pl ? _auto.PlayerSpeedAddresses.Count + " 个" : "未找到（进入车内画面后自动识别）")}";
+                        UpdateCheatAvailability();
                     });
                 }
                 catch
@@ -129,10 +145,14 @@ namespace RotdToolkit
                     if (!alive)
                     {
                         _trainer.Detach();
+                        _auto.Reset();
                         ResetAllToggles();
                         CheatStatus = "游戏已退出。";
+                        UpdateCheatAvailability();
                         return;
                     }
+
+                    UpdateCheatAvailability();
 
                     if (!_auto.HasPlayerInfo)
                     {
@@ -149,17 +169,36 @@ namespace RotdToolkit
                 var target = FindGameProcess();
                 if (target == null)
                 {
+                    ResetAllToggles();
                     CheatStatus = "等待游戏进程…（启动游戏后会自动连接）";
+                    UpdateCheatAvailability();
                     return;
                 }
 
                 _trainer.Attach(target);
                 _locatePlayersDue = true;
+                UpdateCheatAvailability();
                 RelocateCheatsAsync();
             }
             catch
             {
+                ResetAllToggles();
                 CheatStatus = "自动连接失败（可尝试以管理员身份运行）。";
+                UpdateCheatAvailability();
+            }
+        }
+
+        private void UpdateCheatAvailability()
+        {
+            bool available = _trainer.IsAttached && _auto.HasPlayerInfo;
+            if (_cheatAvailable == available)
+            {
+                return;
+            }
+            CheatAvailable = available;
+            if (!available)
+            {
+                ResetAllToggles();
             }
         }
 
